@@ -1730,6 +1730,14 @@ fn view_proc_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 /// corresponding enum manually by first establishing the connection via the inner type and then
 /// wrap the result into the enum.
 ///
+/// This macro supports generating code for `diesel-async`.
+/// By adding the `#[diesel_async]` attribute, the macro instead derives
+/// implements `diesel_async::AsyncConnection` and related traits
+/// for an enum of connections to different databases.
+/// This way all each tuple field type must implement `diesel_async::AsyncConnection`.
+/// It is possible to use `diesel-async`'s `SyncConnectionWrapper` as connection type.
+/// The implementation of `diesel_async::AsyncConnection::establish` works similar to the sync variant.
+///
 /// # Example
 /// ```
 /// # extern crate diesel;
