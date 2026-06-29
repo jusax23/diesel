@@ -109,6 +109,7 @@ __with_asan_tests = [
 ]
 std = ["serde_json?/std"]
 hashbrown = ["dep:hashbrown"]
+async_pool = ["diesel_derives/async_pool"]
 
 [package.metadata.docs.rs]
 features = ["postgres", "mysql", "sqlite", "extras"]

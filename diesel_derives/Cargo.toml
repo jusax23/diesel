@@ -48,6 +48,7 @@ r2d2 = []
 chrono = []
 time = []
 numeric = []
+async_pool = []
 
 [package.metadata.docs.rs]
 features = ["postgres", "mysql", "sqlite", "chrono", "numeric", "time", "r2d2"]

@@ -1890,14 +1890,19 @@ fn view_proc_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 /// ```
 ///
 #[cfg_attr(diesel_docsrs, doc = include_str!(concat!(env!("OUT_DIR"), "/multiconnection.md")))]
-#[proc_macro_derive(MultiConnection)]
+#[proc_macro_derive(MultiConnection, attributes(diesel_async))]
 pub fn derive_multiconnection(input: TokenStream) -> TokenStream {
     derive_multiconnection_inner(input.into()).into()
 }
 
 fn derive_multiconnection_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     syn::parse2(input)
-        .map(multiconnection::derive)
+        .map(|input: syn::DeriveInput| {
+            let is_async = input.attrs.iter().any(
+                |a| matches!(&a.meta, syn::Meta::Path(ident) if ident.is_ident("diesel_async")),
+            );
+            multiconnection::derive(input, is_async)
+        })
         .unwrap_or_else(syn::Error::into_compile_error)
 }
 
