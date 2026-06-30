@@ -1730,6 +1730,17 @@ fn view_proc_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 /// corresponding enum manually by first establishing the connection via the inner type and then
 /// wrap the result into the enum.
 ///
+/// This macro supports generating code for `diesel-async`.
+/// By adding the `#[diesel_async]` attribute, the macro instead derives
+/// implements `diesel_async::AsyncConnection` and related traits
+/// for an enum of connections to different databases.
+/// This way all each tuple field type must implement `diesel_async::AsyncConnection`.
+/// It is possible to use `diesel-async`'s `SyncConnectionWrapper` as connection type.
+/// The implementation of `diesel_async::AsyncConnection::establish` works similar to the sync variant.
+///
+/// Note: The associated types `LoadFuture` and `ExecuteFuture` in the implementation
+/// of the trait `AsyncConnectionCore` must be bound by `'conn`.
+///
 /// # Example
 /// ```
 /// # extern crate diesel;
@@ -1890,14 +1901,19 @@ fn view_proc_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 /// ```
 ///
 #[cfg_attr(diesel_docsrs, doc = include_str!(concat!(env!("OUT_DIR"), "/multiconnection.md")))]
-#[proc_macro_derive(MultiConnection)]
+#[proc_macro_derive(MultiConnection, attributes(diesel_async))]
 pub fn derive_multiconnection(input: TokenStream) -> TokenStream {
     derive_multiconnection_inner(input.into()).into()
 }
 
 fn derive_multiconnection_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     syn::parse2(input)
-        .map(multiconnection::derive)
+        .map(|input: syn::DeriveInput| {
+            let is_async = input.attrs.iter().any(
+                |a| matches!(&a.meta, syn::Meta::Path(ident) if ident.is_ident("diesel_async")),
+            );
+            multiconnection::derive(input, is_async)
+        })
         .unwrap_or_else(syn::Error::into_compile_error)
 }
 
